@@ -8,8 +8,15 @@ on:
 jobs:
   sync-to-hackmd:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'  # 或 '16'，都可以
 
       - name: Install hackmd-cli
         run: |
