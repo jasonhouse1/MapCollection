@@ -14,5 +14,5 @@
 本文自動同步至 HackMD 筆記：[🔗 https://hackmd.io/SkYMpwQvex](https://hackmd.io/SkYMpwQvex)
 
 
-<!-- test sync -->
-test sync to hackmd
+<!-- 測試連線 2025-07-27 -->
+
