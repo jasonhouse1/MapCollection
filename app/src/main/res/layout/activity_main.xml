@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <!-- 顶部个人信息区域 -->
+    <!-- 頂部個人資訊區 -->
     <LinearLayout
         android:id="@+id/profileLayout"
         android:layout_width="match_parent"
@@ -54,23 +54,19 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             tools:srcCompat="@tools:sample/avatars" />
-
     </LinearLayout>
 
-    <!-- 中间的RecyclerView -->
-
-    <!-- 底部导航栏 -->
+    <!-- 中間 RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toTopOf="@id/bottomNavigationView"
         app:layout_constraintTop_toBottomOf="@id/profileLayout"
-        app:layout_constraintVertical_bias="0.0"
-        tools:layout_editor_absoluteX="0dp" />
+        app:layout_constraintBottom_toTopOf="@id/bottomNavigationView" />
 
+    <!-- 底部導覽欄 -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationView"
         android:layout_width="match_parent"
@@ -122,21 +118,7 @@
                 android:contentDescription="個人頁面"
                 android:scaleType="fitCenter"
                 android:src="@drawable/profile2" />
-
         </LinearLayout>
     </com.google.android.material.bottomnavigation.BottomNavigationView>
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/floatingActionButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:clickable="true"
-        android:contentDescription="新增項目"
-        app:backgroundTint="#79CBF0"
-        app:layout_constraintBottom_toTopOf="@id/bottomNavigationView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:rippleColor="#FFFFFF"
-        app:srcCompat="@android:drawable/ic_input_add" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
