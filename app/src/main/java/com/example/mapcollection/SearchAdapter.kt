@@ -8,11 +8,11 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-class RecommendAdapter(
-    private val recommendList: List<Post>
-) : RecyclerView.Adapter<RecommendAdapter.RecommendViewHolder>() {
+class SearchAdapter(
+    private val searchList: List<Post>
+) : RecyclerView.Adapter<SearchAdapter.SearchViewHolder>() {
 
-    class RecommendViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class SearchViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val mapNameText: TextView = itemView.findViewById(R.id.mapNameText)
         val mapTypeText: TextView = itemView.findViewById(R.id.mapTypeText)
         val mapDescriptionText: TextView = itemView.findViewById(R.id.mapDescriptionText)
@@ -22,14 +22,14 @@ class RecommendAdapter(
         val imgUserPhoto: ImageView = itemView.findViewById(R.id.imgUserPhoto)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecommendViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SearchViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.card_recommend, parent, false)
-        return RecommendViewHolder(view)
+            .inflate(R.layout.card_search, parent, false)
+        return SearchViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: RecommendViewHolder, position: Int) {
-        val post = recommendList[position]
+    override fun onBindViewHolder(holder: SearchViewHolder, position: Int) {
+        val post = searchList[position]
 
         holder.mapNameText.text = post.mapName
         holder.mapTypeText.text = post.mapType
@@ -42,9 +42,9 @@ class RecommendAdapter(
             val bitmap = BitmapFactory.decodeByteArray(post.userPhoto, 0, post.userPhoto.size)
             holder.imgUserPhoto.setImageBitmap(bitmap)
         } else {
-            holder.imgUserPhoto.setImageResource(R.drawable.default_user)
+            holder.imgUserPhoto.setImageResource(R.drawable.default_user) // 若無圖片，使用預設圖示
         }
     }
 
-    override fun getItemCount(): Int = recommendList.size
+    override fun getItemCount(): Int = searchList.size
 }

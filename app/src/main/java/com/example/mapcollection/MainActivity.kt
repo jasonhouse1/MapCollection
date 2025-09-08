@@ -1,40 +1,43 @@
 package com.example.mapcollection
 
 import android.content.Intent
+import android.content.SharedPreferences
+import android.graphics.BitmapFactory
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
+import android.util.Log
 import android.widget.Button
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.textfield.TextInputEditText
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.ActivityResultLauncher
-import android.content.SharedPreferences
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.widget.ImageView
 
 class MainActivity : AppCompatActivity() {
+
+    companion object {
+        private const val TAG = "MainActivity"
+        private const val DEFAULT_USER_NAME = "使用者姓名"
+        private const val DEFAULT_USER_LABEL = "個人化標籤"
+    }
+
     private lateinit var recyclerView: RecyclerView
     private val posts = mutableListOf<Post>()
-    private val mapTypes = arrayOf("咖啡廳", "餐廳", "衣服店", "住宿", "台南景點", "墾丁景點","其他")
     private lateinit var mapsActivityLauncher: ActivityResultLauncher<Intent>
+    private lateinit var editProfileLauncher: ActivityResultLauncher<Intent>
     private var editingPosition: Int? = null
     private lateinit var sharedPreferences: SharedPreferences
     private val gson = Gson()
-    private lateinit var editProfileLauncher: ActivityResultLauncher<Intent>
+
     private lateinit var userNameText: TextView
     private lateinit var userLabelText: TextView
     private lateinit var imgProfile: ImageView
@@ -49,108 +52,146 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        try {
+            initializeComponents()
+            setupActivityLaunchers()
+        } catch (e: Exception) {
+            Log.e(TAG, "初始化失敗", e)
+            Toast.makeText(this, "應用初始化失敗", Toast.LENGTH_SHORT).show()
+            finish()
+        }
+    }
+
+    private fun initializeComponents() {
         sharedPreferences = getSharedPreferences("MapCollection", MODE_PRIVATE)
         loadPosts()
-        loadUserProfile()
         setupRecyclerView()
         setupNavigationButtons()
         setupFloatingButton()
         setupEditProfileButton()
+        loadUserProfile()
+    }
 
+    private fun setupActivityLaunchers() {
         mapsActivityLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            if (result.resultCode == android.app.Activity.RESULT_OK) {
-                val data = result.data
-                val mapName = data?.getStringExtra("mapName") ?: ""
-                val mapType = data?.getStringExtra("mapType") ?: ""
-                if (editingPosition != null) {
-                    posts[editingPosition!!] = Post(mapName, mapType)
-                    recyclerView.adapter?.notifyItemChanged(editingPosition!!)
+        ) { result -> handleMapActivityResult(result.resultCode, result.data) }
+
+        editProfileLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result -> handleEditProfileResult(result.resultCode, result.data) }
+    }
+
+    private fun handleMapActivityResult(resultCode: Int, data: Intent?) {
+        if (resultCode == RESULT_OK && data != null) {
+            val newPost = Post(
+                mapName = data.getStringExtra("mapName").orEmpty().ifBlank { "未命名地圖" },
+                mapType = data.getStringExtra("mapType").orEmpty(),
+                description = data.getStringExtra("description").orEmpty(),
+                latitude = data.getDoubleExtra("latitude", 0.0),
+                longitude = data.getDoubleExtra("longitude", 0.0)
+            )
+
+            if (validatePost(newPost)) {
+                editingPosition?.let { position ->
+                    if (position in posts.indices) {
+                        posts[position] = newPost
+                        recyclerView.adapter?.notifyItemChanged(position)
+                    }
                     editingPosition = null
-                } else {
-                    posts.add(Post(mapName, mapType))
+                } ?: run {
+                    posts.add(newPost)
                     recyclerView.adapter?.notifyItemInserted(posts.size - 1)
                 }
                 savePosts()
             }
         }
+    }
 
-        editProfileLauncher = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            if (result.resultCode == android.app.Activity.RESULT_OK) {
-                val data = result.data
-                val userName = data?.getStringExtra("userName") ?: ""
-                val userLabel = data?.getStringExtra("userLabel") ?: ""
-                val userPhoto = data?.getByteArrayExtra("userPhoto")
-                
-                saveUserProfile(userName, userLabel)
-                if (userPhoto != null) {
-                    saveUserPhoto(userPhoto)
-                }
-                updateUserProfileDisplay(userName, userLabel)
-                loadUserPhoto()
+    private fun validatePost(post: Post): Boolean {
+        return when {
+            post.mapName.isBlank() -> {
+                Toast.makeText(this, "地圖名稱不能為空", Toast.LENGTH_SHORT).show()
+                false
             }
+            post.latitude !in -90.0..90.0 -> {
+                Toast.makeText(this, "緯度超出範圍 (-90 ~ 90)", Toast.LENGTH_SHORT).show()
+                false
+            }
+            post.longitude !in -180.0..180.0 -> {
+                Toast.makeText(this, "經度超出範圍 (-180 ~ 180)", Toast.LENGTH_SHORT).show()
+                false
+            }
+            else -> true
+        }
+    }
+
+    private fun handleEditProfileResult(resultCode: Int, data: Intent?) {
+        if (resultCode == RESULT_OK && data != null) {
+            val userName = data.getStringExtra("userName").orEmpty()
+            val userLabel = data.getStringExtra("userLabel").orEmpty()
+            val userPhoto = data.getByteArrayExtra("userPhoto")
+
+            saveUserProfile(userName, userLabel)
+            if (userPhoto != null) saveUserPhoto(userPhoto)
+            updateUserProfileDisplay(userName, userLabel)
+            loadUserPhoto()
         }
     }
 
     private fun setupRecyclerView() {
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = GridLayoutManager(this, 3)
-        recyclerView.adapter = PostAdapter(posts) { position ->
-            val post = posts[position]
-            val intent = Intent(this, MapsActivity::class.java)
-            intent.putExtra("mapName", post.mapName)
-            intent.putExtra("mapType", post.mapType)
-            editingPosition = position
-            mapsActivityLauncher.launch(intent)
-        }
+        recyclerView.adapter = PostAdapter(posts,
+            onItemClick = { position ->
+                val post = posts[position]
+                val intent = Intent(this, MapsActivity::class.java).apply {
+                    putExtra("mapName", post.mapName)
+                    putExtra("mapType", post.mapType)
+                    putExtra("description", post.description)
+                    putExtra("latitude", post.latitude)
+                    putExtra("longitude", post.longitude)
+                }
+                editingPosition = position
+                mapsActivityLauncher.launch(intent)
+            },
+            onDeleteClick = { position -> deletePost(position) }
+        )
     }
 
     private fun setupNavigationButtons() {
-        // 設置推薦按鈕點擊事件
         findViewById<ImageButton>(R.id.btnRecommend).setOnClickListener {
-            val intent = Intent(this, RecommendActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, RecommendActivity::class.java))
         }
-
-        // 設置搜尋按鈕點擊事件
         findViewById<ImageButton>(R.id.btnSearch).setOnClickListener {
-            val intent = Intent(this, SearchActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, SearchActivity::class.java))
         }
-
-        // 設置路徑按鈕點擊事件
         findViewById<ImageButton>(R.id.btnPath).setOnClickListener {
-            val intent = Intent(this, PathActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, PathActivity::class.java))
         }
     }
 
     private fun setupFloatingButton() {
         findViewById<FloatingActionButton>(R.id.floatingActionButton).setOnClickListener {
-            val intent = Intent(this, MapsActivity::class.java)
-            mapsActivityLauncher.launch(intent)
+            mapsActivityLauncher.launch(Intent(this, MapsActivity::class.java))
         }
     }
 
     private fun setupEditProfileButton() {
         findViewById<Button>(R.id.btnEditProfile).setOnClickListener {
-            val intent = Intent(this, EditProfileActivity::class.java)
-            // 傳遞當前使用者資料
-            intent.putExtra("currentUserName", userNameText.text.toString())
-            intent.putExtra("currentUserLabel", userLabelText.text.toString())
+            val intent = Intent(this, EditProfileActivity::class.java).apply {
+                putExtra("currentUserName", userNameText.text.toString())
+                putExtra("currentUserLabel", userLabelText.text.toString())
+            }
             editProfileLauncher.launch(intent)
         }
     }
 
     private fun loadPosts() {
-        val json = sharedPreferences.getString("posts", "[]")
+        val json = sharedPreferences.getString("posts", "[]") ?: "[]"
         val type = object : TypeToken<List<Post>>() {}.type
-        val savedPosts = gson.fromJson<List<Post>>(json, type)
         posts.clear()
-        posts.addAll(savedPosts)
+        posts.addAll(gson.fromJson(json, type))
     }
 
     private fun savePosts() {
@@ -162,18 +203,23 @@ class MainActivity : AppCompatActivity() {
         userNameText = findViewById(R.id.userName)
         userLabelText = findViewById(R.id.userLabel)
         imgProfile = findViewById(R.id.imgProfile)
-        
-        val userName = sharedPreferences.getString("userName", "使用者姓名") ?: "使用者姓名"
-        val userLabel = sharedPreferences.getString("userLabel", "個人化標籤") ?: "個人化標籤"
-        
-        updateUserProfileDisplay(userName, userLabel)
+
+        val name = sharedPreferences.getString("userName", DEFAULT_USER_NAME) ?: DEFAULT_USER_NAME
+        val label = sharedPreferences.getString("userLabel", DEFAULT_USER_LABEL) ?: DEFAULT_USER_LABEL
+
+        updateUserProfileDisplay(name, label)
         loadUserPhoto()
     }
 
-    private fun saveUserProfile(userName: String, userLabel: String) {
+    private fun updateUserProfileDisplay(name: String, label: String) {
+        userNameText.text = name
+        userLabelText.text = label
+    }
+
+    private fun saveUserProfile(name: String, label: String) {
         sharedPreferences.edit()
-            .putString("userName", userName)
-            .putString("userLabel", userLabel)
+            .putString("userName", name)
+            .putString("userLabel", label)
             .apply()
     }
 
@@ -185,72 +231,27 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadUserPhoto() {
         val photoBase64 = sharedPreferences.getString("userPhoto", null)
-        if (photoBase64 != null) {
+        photoBase64?.let {
             try {
-                val photoBytes = android.util.Base64.decode(photoBase64, android.util.Base64.DEFAULT)
-                val bitmap = BitmapFactory.decodeByteArray(photoBytes, 0, photoBytes.size)
+                val bytes = android.util.Base64.decode(it, android.util.Base64.DEFAULT)
+                val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                 imgProfile.setImageBitmap(bitmap)
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e(TAG, "頭像載入失敗", e)
             }
         }
     }
 
-    private fun updateUserProfileDisplay(userName: String, userLabel: String) {
-        userNameText.text = userName
-        userLabelText.text = userLabel
-    }
-
-    fun deletePost(position: Int) {
-        if (position in 0 until posts.size) {
-            // 如果正在編輯被刪除的項目，重置編輯位置
+    private fun deletePost(position: Int) {
+        if (position in posts.indices) {
             if (editingPosition == position) {
                 editingPosition = null
             } else if (editingPosition != null && editingPosition!! > position) {
-                // 如果編輯位置在被刪除項目之後，需要調整位置
                 editingPosition = editingPosition!! - 1
             }
-            
             posts.removeAt(position)
-            recyclerView.adapter?.notifyDataSetChanged()
+            recyclerView.adapter?.notifyItemRemoved(position)
             savePosts()
         }
     }
-}
-
-data class Post(
-    val mapName: String,
-    val mapType: String
-)
-
-class PostAdapter(private val posts: List<Post>, private val onItemClick: (Int) -> Unit) :
-    RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
-
-    class PostViewHolder(view: android.view.View) : RecyclerView.ViewHolder(view) {
-        val mapNameText: TextView = view.findViewById(R.id.mapNameText)
-        val mapTypeText: TextView = view.findViewById(R.id.mapTypeText)
-        val btnDelete: android.widget.ImageButton = view.findViewById(R.id.btnDelete)
-    }
-
-    override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): PostViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.card_post, parent, false)
-        return PostViewHolder(view)
-    }
-
-    override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
-        val post = posts[position]
-        holder.mapNameText.text = post.mapName
-        holder.mapTypeText.text = post.mapType
-        holder.itemView.setOnClickListener {
-            onItemClick(position)
-        }
-        holder.btnDelete.setOnClickListener {
-            // 刪除按鈕點擊事件
-            val mainActivity = holder.itemView.context as? MainActivity
-            mainActivity?.deletePost(position)
-        }
-    }
-
-    override fun getItemCount() = posts.size
 }
