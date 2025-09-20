@@ -3,6 +3,7 @@ package com.example.mapcollection
 import android.content.Intent
 import android.os.Bundle
 import android.util.Patterns
+import android.view.animation.AlphaAnimation
 import androidx.appcompat.app.AppCompatActivity
 import com.example.mapcollection.databinding.ActivityLoginBinding
 import com.google.android.material.snackbar.Snackbar
@@ -22,7 +23,10 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // ✅ 已登入就直接走
+        //  加入畫面淡入動畫
+        setupFadeInAnimation()
+
+        //  已登入就直接走
         val current = auth.currentUser
         if (current?.email != null) {
             rememberEmail(current.email!!)
@@ -30,7 +34,10 @@ class LoginActivity : AppCompatActivity() {
             return
         }
 
-        binding.btnLogin.setOnClickListener { loginUser() }
+        binding.btnLogin.setOnClickListener {
+            it.startAnimation(AlphaAnimation(1f, 0.7f)) // 按下時淡化效果
+            loginUser()
+        }
         binding.tvGoRegister.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
             finish()
@@ -42,6 +49,10 @@ class LoginActivity : AppCompatActivity() {
         val pwd = binding.etPassword.text?.toString().orEmpty()
         if (!validate(email, pwd)) return
 
+        // 登入中按鈕禁用
+        binding.btnLogin.isEnabled = false
+        binding.btnLogin.alpha = 0.6f
+
         // 1) 先用 Firebase Auth 正常登入
         auth.signInWithEmailAndPassword(email, pwd)
             .addOnSuccessListener {
@@ -52,6 +63,11 @@ class LoginActivity : AppCompatActivity() {
             .addOnFailureListener {
                 // 2) 失敗 → 試舊資料（Firestore）並自動遷移
                 migrateLegacyUserIfMatch(email, pwd)
+            }
+            .addOnCompleteListener {
+                // 登入完成恢復按鈕
+                binding.btnLogin.isEnabled = true
+                binding.btnLogin.alpha = 1f
             }
     }
 
@@ -90,7 +106,7 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
-    // ✅ 用 Firestore 的 firstLogin 決定導向
+    //  用 Firestore 的 firstLogin 決定導向
     private fun checkIfFirstLogin(email: String) {
         db.collection("users").document(email).get()
             .addOnSuccessListener { doc ->
@@ -128,6 +144,20 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun show(msg: String) {
-        Snackbar.make(binding.root, msg, Snackbar.LENGTH_SHORT).show()
+        Snackbar.make(binding.root, msg, Snackbar.LENGTH_SHORT)
+            .setBackgroundTint(0xFFF78DA7.toInt())  // 粉色
+            .setTextColor(0xFFFFFFFF.toInt())       // 白字
+            .show()
+    }
+    private fun setupFadeInAnimation() {
+        val fade = AlphaAnimation(0f, 1f).apply {
+            duration = 800
+            fillAfter = true
+        }
+        binding.imgLogo.startAnimation(fade)
+        binding.etEmail.startAnimation(fade)
+        binding.etPassword.startAnimation(fade)
+        binding.btnLogin.startAnimation(fade)
+        binding.tvGoRegister.startAnimation(fade)
     }
 }

@@ -2,4 +2,9 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- 💠 柔藍灰主題顏色 -->
+    <color name="main_primary">#B8DAE3</color>          <!-- 主色 -->
+    <color name="main_primary_variant">#9CC4D0</color>  <!-- 深一點的藍灰（按下時） -->
+    <color name="on_primary">#FFFFFF</color>
 </resources>

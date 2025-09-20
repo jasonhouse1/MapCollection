@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 按下時（state_pressed） -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#F06292" /> <!-- 深粉色 -->
+            <corners android:radius="16dp" />
+        </shape>
+    </item>
+
+    <!--  預設狀態 -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#F78DA7" /> <!-- 柔粉色 -->
+            <corners android:radius="16dp" />
+        </shape>
+    </item>
+
+</selector>
