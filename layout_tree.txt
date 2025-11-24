@@ -1,0 +1,38 @@
+列出磁碟區 Windows-SSD 的資料夾 PATH
+磁碟區序號為 F4F9-84E9
+C:\USERS\CHIU-CHEN-YIN\STUDIOPROJECTS\MAP\APP\SRC\MAIN\RES\LAYOUT
+    activity_editprofile.xml
+    activity_favorites.xml
+    activity_following.xml
+    activity_list.xml
+    activity_login.xml
+    activity_main.xml
+    activity_maps.xml
+    activity_maps2.xml
+    activity_map_editor.xml
+    activity_path.xml
+    activity_pick_location.xml
+    activity_public_map_viewer.xml
+    activity_recommend.xml
+    activity_recommended_map.xml
+    activity_register.xml
+    activity_search.xml
+    activity_spot_list.xml
+    activity_trip_planner.xml
+    activity_trip_stop_detail.xml
+    activity_user_public_profile.xml
+    bottom_navigation.xml
+    card_information.xml
+    card_newpoint.xml
+    card_path.xml
+    card_post.xml
+    card_recommend.xml
+    card_search.xml
+    item_follow_user.xml
+    item_search_result.xml
+    item_spot.xml
+    item_stat.xml
+    item_trip_card.xml
+    
+子資料夾不存在 
+

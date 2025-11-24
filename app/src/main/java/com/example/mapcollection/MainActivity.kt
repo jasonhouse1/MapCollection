@@ -4,22 +4,18 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.BitmapFactory
 import android.os.Bundle
-import android.view.ContextThemeWrapper
-import android.widget.Button
-import android.widget.ImageButton
-import android.widget.ImageView
+import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.mapcollection.databinding.ActivityMainBinding
 import com.google.android.material.chip.Chip
-import com.google.android.material.chip.ChipGroup
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.AggregateSource
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
 import com.google.gson.Gson
@@ -27,48 +23,40 @@ import com.google.gson.reflect.TypeToken
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var recyclerView: RecyclerView
+    private lateinit var binding: ActivityMainBinding
+    private lateinit var recyclerView: androidx.recyclerview.widget.RecyclerView
     private val posts = mutableListOf<Post>()
     private lateinit var sharedPreferences: SharedPreferences
     private val gson = Gson()
-
-    // 個人資料 UI
-    private lateinit var userNameText: TextView
-    private lateinit var introductionText: TextView
-    private lateinit var imgProfile: ImageView
-    private lateinit var chipGroupLabels: ChipGroup
-
-    // Firestore
     private val db = Firebase.firestore
     private var currentEmail: String? = null
+    private var isNavigating = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // ✅ 取消 edge-to-edge，讓系統自動處理狀態列/導覽列內距（與其他頁一致）
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         WindowCompat.setDecorFitsSystemWindows(window, true)
 
-        setContentView(R.layout.activity_main)
-
         currentEmail = getSharedPreferences("Account", MODE_PRIVATE)
-            .getString("LOGGED_IN_EMAIL", null)
+            .getString("LOGGED_IN_EMAIL", null) ?: run {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
 
         sharedPreferences = getSharedPreferences("MapCollection", MODE_PRIVATE)
         loadPostsFromLocal()
 
-        userNameText = findViewById(R.id.userName)
-        introductionText = findViewById(R.id.introduction)
-        imgProfile = findViewById(R.id.imgProfile)
-        chipGroupLabels = findViewById(R.id.chipGroupLabels)
+        recyclerView = binding.recyclerView
 
         loadProfileFromLocal()
         fetchProfileFromCloud()
 
         setupRecyclerView()
-        setupNavigationButtons()
         setupFloatingAdd()
         setupEditProfileButton()
-        setupShowListButton()
+        setupBottomNavigation()
 
         fetchMyPostsFromCloud()
     }
@@ -79,8 +67,7 @@ class MainActivity : AppCompatActivity() {
         fetchMyPostsFromCloud()
     }
 
-    // ---------------- 個人資料：雲端 ↔ 本地 ----------------
-
+    // ---------------- 個人資料讀取 ----------------
     private fun loadProfileFromLocal() {
         val email = currentEmail ?: return
         val prefs = getSharedPreferences("Profile_$email", MODE_PRIVATE)
@@ -94,12 +81,12 @@ class MainActivity : AppCompatActivity() {
         updateUserProfileDisplay(userName, userLabel, introduction)
 
         when {
-            !photoUrl.isNullOrEmpty() -> Glide.with(this).load(photoUrl).into(imgProfile)
+            !photoUrl.isNullOrEmpty() -> Glide.with(this).load(photoUrl).into(binding.imgProfile)
             !photoBase64.isNullOrEmpty() -> {
                 try {
                     val bytes = android.util.Base64.decode(photoBase64, android.util.Base64.DEFAULT)
                     val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                    imgProfile.setImageBitmap(bmp)
+                    binding.imgProfile.setImageBitmap(bmp)
                 } catch (_: Exception) {}
             }
         }
@@ -119,7 +106,8 @@ class MainActivity : AppCompatActivity() {
                     saveProfileToLocal(userName, userLabel, introduction)
 
                     if (!photoUrl.isNullOrEmpty()) {
-                        Glide.with(this).load(photoUrl).into(imgProfile)
+                        Glide.with(this).load(photoUrl).into(binding.imgProfile)
+
                         getSharedPreferences("Profile_$email", MODE_PRIVATE)
                             .edit()
                             .putString("photoUrl", photoUrl)
@@ -127,6 +115,9 @@ class MainActivity : AppCompatActivity() {
                             .apply()
                     }
                 }
+
+                updateStats()
+                fetchSocialCounts()
             }
     }
 
@@ -140,36 +131,32 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateUserProfileDisplay(userName: String, userLabel: String, introduction: String) {
-        userNameText.text = userName
-        introductionText.text = introduction
+        binding.userName.text = userName
+        binding.introduction.text = introduction
         renderLabelChips(userLabel)
     }
 
     private fun renderLabelChips(raw: String) {
-        chipGroupLabels.removeAllViews()
-
-        val tokens = raw
-            .replace("，", ",")
-            .replace("、", ",")
+        binding.chipGroupLabels.removeAllViews()
+        val tokens = raw.replace("，", ",").replace("、", ",")
             .split(',', '#', ' ')
             .map { it.trim() }
             .filter { it.isNotEmpty() }
             .distinct()
 
         for (t in tokens) {
-            val themedCtx = try { ContextThemeWrapper(this, R.style.ChipStyle_Label) } catch (_: Exception) { this }
+            val themedCtx = android.view.ContextThemeWrapper(this, R.style.ChipStyle_Label)
             val chip = Chip(themedCtx, null, 0).apply {
                 text = t
                 isCheckable = false
                 isClickable = false
                 setEnsureMinTouchTargetSize(false)
             }
-            chipGroupLabels.addView(chip)
+            binding.chipGroupLabels.addView(chip)
         }
     }
 
-    // ---------------- 我的貼文：雲端 ↔ 本地 ----------------
-
+    // ---------------- 本地貼文讀取 ----------------
     private fun loadPostsFromLocal() {
         val json = sharedPreferences.getString("posts", "[]")
         val type = object : TypeToken<List<Post>>() {}.type
@@ -183,9 +170,9 @@ class MainActivity : AppCompatActivity() {
         sharedPreferences.edit().putString("posts", json).apply()
     }
 
+    // ---------------- Firestore 讀取貼文 ----------------
     private fun fetchMyPostsFromCloud() {
         val email = currentEmail ?: return
-
         db.collection("posts")
             .whereEqualTo("ownerEmail", email)
             .orderBy("createdAt", Query.Direction.DESCENDING)
@@ -193,14 +180,20 @@ class MainActivity : AppCompatActivity() {
             .addOnSuccessListener { snap ->
                 posts.clear()
                 for (doc in snap) {
-                    val name = doc.getString("mapName") ?: ""
-                    val type = doc.getString("mapType") ?: ""
-                    val ts = doc.getTimestamp("createdAt")
-                    val isRec = doc.getBoolean("isRecommended") ?: false
-                    posts.add(Post(doc.id, name, type, ts, isRec))
+                    posts.add(
+                        Post(
+                            doc.id,
+                            doc.getString("mapName") ?: "",
+                            doc.getString("mapType") ?: "",
+                            doc.getTimestamp("createdAt"),
+                            doc.getBoolean("isRecommended") ?: false
+                        )
+                    )
                 }
+
                 recyclerView.adapter?.notifyDataSetChanged()
                 savePostsToLocal()
+                updateStats()
             }
             .addOnFailureListener {
                 db.collection("posts")
@@ -209,23 +202,59 @@ class MainActivity : AppCompatActivity() {
                     .addOnSuccessListener { snap2 ->
                         posts.clear()
                         for (doc in snap2) {
-                            val name = doc.getString("mapName") ?: ""
-                            val type = doc.getString("mapType") ?: ""
-                            val ts = doc.getTimestamp("createdAt")
-                            val isRec = doc.getBoolean("isRecommended") ?: false
-                            posts.add(Post(doc.id, name, type, ts, isRec))
+                            posts.add(
+                                Post(
+                                    doc.id,
+                                    doc.getString("mapName") ?: "",
+                                    doc.getString("mapType") ?: "",
+                                    doc.getTimestamp("createdAt"),
+                                    doc.getBoolean("isRecommended") ?: false
+                                )
+                            )
                         }
                         posts.sortByDescending { it.createdAt?.seconds ?: 0L }
                         recyclerView.adapter?.notifyDataSetChanged()
                         savePostsToLocal()
+                        updateStats()
                     }
             }
     }
 
-    // ---------------- Recycler / 新增・刪除 ----------------
+    // ---------------- 統計資訊 ----------------
+    private fun updateStats() {
+        val postCount = posts.size
 
+        // 貼文數
+        binding.statPostsValue.text = postCount.toString()
+
+        // 粉絲與追蹤中先清空（fetchSocialCounts 會補上）
+        binding.statFollowersValue.text = "—"
+        binding.statFollowingValue.text = "—"
+    }
+
+    private fun fetchSocialCounts() {
+        val email = currentEmail ?: return
+        val userDoc = db.collection("users").document(email)
+
+        // 粉絲
+        userDoc.collection("followers")
+            .count()
+            .get(AggregateSource.SERVER)
+            .addOnSuccessListener { agg ->
+                binding.statFollowersValue.text = agg.count.toString()
+            }
+
+        // 追蹤中
+        userDoc.collection("following")
+            .count()
+            .get(AggregateSource.SERVER)
+            .addOnSuccessListener { agg ->
+                binding.statFollowingValue.text = agg.count.toString()
+            }
+    }
+
+    // ---------------- RecyclerView 設置 ----------------
     private fun setupRecyclerView() {
-        recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = GridLayoutManager(this, 3)
         recyclerView.adapter = PostAdapter(posts) { position ->
             if (position !in posts.indices) return@PostAdapter
@@ -237,8 +266,70 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ---------------- 新增貼文按鈕 ----------------
+    private fun setupFloatingAdd() {
+        binding.fabUpload.setOnClickListener {
+            startActivity(
+                Intent(this, MapEditorActivity::class.java)
+                    .putExtra("NEW_POST", true)
+            )
+        }
+    }
+
+    // ---------------- 編輯資料 ----------------
+    private fun setupEditProfileButton() {
+        binding.btnEditProfile.setOnClickListener {
+            val intent = Intent(this, EditProfileActivity::class.java).apply {
+                putExtra("currentUserName", binding.userName.text.toString())
+                putExtra("currentUserLabel", getCurrentLabelsAsString())
+                putExtra("currentIntroduction", binding.introduction.text.toString())
+            }
+            startActivity(intent)
+        }
+    }
+
+    private fun getCurrentLabelsAsString(): String {
+        val list = mutableListOf<String>()
+        for (i in 0 until binding.chipGroupLabels.childCount) {
+            val c = binding.chipGroupLabels.getChildAt(i)
+            if (c is Chip) list.add(c.text?.toString() ?: "")
+        }
+        return list.filter { it.isNotEmpty() }.joinToString(",")
+    }
+
+    // ---------------- 底部導覽列 ----------------
+    private fun setupBottomNavigation() {
+
+        val bottomNav =
+            findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomBar)
+
+        bottomNav.setOnItemSelectedListener { item ->
+            if (isNavigating) return@setOnItemSelectedListener false
+            isNavigating = true
+
+            when (item.itemId) {
+                R.id.nav_home ->
+                    startActivity(Intent(this, RecommendActivity::class.java))
+
+                R.id.nav_search ->
+                    startActivity(Intent(this, SearchActivity::class.java))
+
+                R.id.nav_path ->
+                    startActivity(Intent(this, PathActivity::class.java))
+
+                R.id.nav_profile -> { /* 已在本頁 */ }
+            }
+
+            bottomNav.postDelayed({ isNavigating = false }, 500)
+            true
+        }
+
+        bottomNav.selectedItemId = R.id.nav_profile
+    }
+
+    // ---------------- 貼文刪除 ----------------
     fun confirmDeletePost(position: Int) {
-        if (position !in 0 until posts.size) return
+        if (position !in posts.indices) return
         val title = posts[position].mapName.ifBlank { "未命名地圖" }
 
         AlertDialog.Builder(this)
@@ -250,7 +341,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun deletePost(position: Int) {
-        if (position !in 0 until posts.size) return
+        if (position !in posts.indices) return
         val docId = posts[position].docId
         val email = currentEmail ?: return
 
@@ -267,61 +358,12 @@ class MainActivity : AppCompatActivity() {
         posts.removeAt(position)
         recyclerView.adapter?.notifyDataSetChanged()
         savePostsToLocal()
-    }
-
-    // ---------------- 底部導航 / FAB ----------------
-
-    private fun setupNavigationButtons() {
-        findViewById<ImageButton>(R.id.btnRecommend).setOnClickListener {
-            startActivity(Intent(this, RecommendActivity::class.java))
-        }
-        findViewById<ImageButton>(R.id.btnSearch).setOnClickListener {
-            startActivity(Intent(this, SearchActivity::class.java))
-        }
-        findViewById<ImageButton>(R.id.btnPath).setOnClickListener {
-            startActivity(Intent(this, PathActivity::class.java))
-        }
-    }
-
-    private fun setupFloatingAdd() {
-        findViewById<FloatingActionButton>(R.id.floatingActionButton)
-            .setOnClickListener {
-                startActivity(
-                    Intent(this, MapEditorActivity::class.java)
-                        .putExtra("NEW_POST", true)
-                )
-            }
-    }
-
-    private fun setupEditProfileButton() {
-        findViewById<Button>(R.id.btnEditProfile).setOnClickListener {
-            val intent = Intent(this, EditProfileActivity::class.java).apply {
-                putExtra("currentUserName", userNameText.text.toString())
-                putExtra("currentUserLabel", getCurrentLabelsAsString())
-                putExtra("currentIntroduction", introductionText.text.toString())
-            }
-            startActivity(intent)
-        }
-    }
-
-    private fun getCurrentLabelsAsString(): String {
-        val list = mutableListOf<String>()
-        for (i in 0 until chipGroupLabels.childCount) {
-            val c = chipGroupLabels.getChildAt(i)
-            if (c is Chip) list.add(c.text?.toString() ?: "")
-        }
-        return list.filter { it.isNotEmpty() }.joinToString(",")
-    }
-
-    private fun setupShowListButton() {
-        findViewById<ImageButton>(R.id.btnShowList).setOnClickListener {
-            startActivity(Intent(this, ListActivity::class.java))
-        }
+        updateStats()
+        fetchSocialCounts()
     }
 }
 
-// ---------------- 資料類別 & Adapter ----------------
-
+// ------------------- 資料類別 + Adapter -------------------
 data class Post(
     val docId: String = "",
     val mapName: String = "",
@@ -330,10 +372,12 @@ data class Post(
     val isRecommended: Boolean = false
 )
 
-class PostAdapter(private val posts: List<Post>, private val onItemClick: (Int) -> Unit) :
-    RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
+class PostAdapter(
+    private val posts: List<Post>,
+    private val onItemClick: (Int) -> Unit
+) : androidx.recyclerview.widget.RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
 
-    class PostViewHolder(view: android.view.View) : RecyclerView.ViewHolder(view) {
+    class PostViewHolder(view: View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(view) {
         val mapNameText: TextView = view.findViewById(R.id.mapNameText)
         val mapTypeText: TextView = view.findViewById(R.id.mapTypeText)
         val btnDelete: android.widget.ImageButton = view.findViewById(R.id.btnDelete)
