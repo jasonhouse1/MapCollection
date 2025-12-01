@@ -1,57 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="140dp"
-    android:layout_margin="4dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="4dp">
+    android:layout_height="wrap_content"
+    android:layout_margin="6dp"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="2dp"
+    app:strokeColor="@color/chip_outline"
+    app:strokeWidth="1dp">
 
-    <FrameLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content">
 
         <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:id="@+id/mapPreview"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="@drawable/bg_post_placeholder"
+            android:scaleType="centerCrop"
             android:src="@drawable/map"
-            android:scaleType="centerCrop" />
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="#66000000"
+            android:gravity="start"
             android:orientation="vertical"
-            android:padding="8dp">
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="8dp"
+            app:layout_constraintBottom_toBottomOf="@id/mapPreview"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
 
             <TextView
                 android:id="@+id/mapNameText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                android:gravity="center"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                tools:text="Map name" />
 
             <TextView
                 android:id="@+id/mapTypeText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:textColor="#666666"
-                android:textSize="12sp" />
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#E5E7EB"
+                android:textSize="12sp"
+                tools:text="Type" />
         </LinearLayout>
 
-        <!-- 刪除按鈕放在右上角 -->
         <ImageButton
             android:id="@+id/btnDelete"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_gravity="top|end"
-            android:layout_margin="8dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_margin="6dp"
             android:background="@android:color/transparent"
-            android:contentDescription="刪除"
-            android:scaleType="fitCenter"
+            android:contentDescription="Delete"
+            android:padding="4dp"
+            android:tint="@android:color/white"
+            app:layout_constraintEnd_toEndOf="@id/mapPreview"
+            app:layout_constraintTop_toTopOf="@id/mapPreview"
             app:srcCompat="@drawable/delete" />
-    </FrameLayout>
-</androidx.cardview.widget.CardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

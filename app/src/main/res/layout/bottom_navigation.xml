@@ -5,8 +5,10 @@
     android:id="@+id/bottomBar"
     android:layout_width="match_parent"
     android:layout_height="72dp"
-    android:background="?attr/colorSurface"
-    app:elevation="12dp"
-    app:itemIconTint="@null"
+    android:background="@drawable/bottom_nav_background"
+    app:elevation="0dp"
+    app:itemActiveIndicatorStyle="@style/BottomNav.ActiveIndicator"
+    app:itemIconTint="@color/bottom_nav_tint"
     app:itemTextColor="@color/bottom_nav_tint"
+    app:labelVisibilityMode="labeled"
     app:menu="@menu/bottom_nav_menu"/>

@@ -5,212 +5,210 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/surface_soft">
 
-    <!-- 整頁可滑動 -->
+    <!-- Scrollable content -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:paddingTop="8dp">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <LinearLayout
             android:id="@+id/content"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="90dp">
 
-            <!-- 頭像 -->
-            <ImageView
-                android:id="@+id/imgProfile"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:layout_margin="16dp"
-                android:scaleType="centerCrop"
-                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Circle"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                tools:src="@tools:sample/avatars" />
-
-            <!-- 使用者資訊 -->
-            <LinearLayout
-                android:id="@+id/userInfo"
-                android:layout_width="0dp"
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/profileCard"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="16dp"
-                android:orientation="vertical"
-                app:layout_constraintTop_toTopOf="@id/imgProfile"
-                app:layout_constraintBottom_toBottomOf="@id/imgProfile"
-                app:layout_constraintStart_toEndOf="@id/imgProfile"
-                app:layout_constraintEnd_toEndOf="parent">
-
-                <TextView
-                    android:id="@+id/userName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="?attr/colorOnSurface"
-                    tools:text="林傑" />
-
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/chipGroupLabels"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    app:chipSpacingHorizontal="8dp"
-                    app:singleLine="true" />
-
-                <TextView
-                    android:id="@+id/introduction"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textSize="14sp"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    tools:text="熱愛探索台灣美食與秘境" />
-            </LinearLayout>
-
-            <!--  粉絲｜貼文｜追蹤中  -->
-            <LinearLayout
-                android:id="@+id/statsContainer"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
-                android:layout_marginTop="8dp"
-                android:orientation="horizontal"
-                android:gravity="center"
-                app:layout_constraintTop_toBottomOf="@id/imgProfile"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
-
-                <!-- 粉絲 -->
-                <LinearLayout
-                    android:id="@+id/statFollowers"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/statFollowersValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="?attr/colorOnSurface"
-                        tools:text="0" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="粉絲"
-                        android:textSize="12sp"
-                        android:textColor="?attr/colorOnSurfaceVariant" />
-                </LinearLayout>
-
-                <!-- 貼文 -->
-                <LinearLayout
-                    android:id="@+id/statPosts"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/statPostsValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="?attr/colorOnSurface"
-                        tools:text="0" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="貼文"
-                        android:textSize="12sp"
-                        android:textColor="?attr/colorOnSurfaceVariant" />
-                </LinearLayout>
-
-                <!-- 追蹤中 -->
-                <LinearLayout
-                    android:id="@+id/statFollowing"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/statFollowingValue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="?attr/colorOnSurface"
-                        tools:text="0" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="追蹤中"
-                        android:textSize="12sp"
-                        android:textColor="?attr/colorOnSurfaceVariant" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- 編輯個人資料 -->
-            <Button
-                android:id="@+id/btnEditProfile"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
                 android:layout_marginHorizontal="16dp"
                 android:layout_marginTop="12dp"
-                android:text="編輯個人檔案"
-                android:textSize="13sp"
-                app:layout_constraintTop_toBottomOf="@id/statsContainer"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                android:layout_marginBottom="10dp"
+                android:padding="16dp"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/chip_outline"
+                app:strokeWidth="1dp">
 
-            <!-- 分隔線 -->
-            <View
-                android:id="@+id/divider"
-                android:layout_width="0dp"
-                android:layout_height="1dp"
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <!-- Avatar -->
+                    <ImageView
+                        android:id="@+id/imgProfile"
+                        android:layout_width="88dp"
+                        android:layout_height="88dp"
+                        android:layout_marginEnd="16dp"
+                        android:background="@drawable/bg_post_placeholder"
+                        android:scaleType="centerCrop"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Circle"
+                        tools:src="@tools:sample/avatars" />
+
+                    <!-- User info -->
+                    <LinearLayout
+                        android:id="@+id/userInfo"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        app:layout_constraintStart_toEndOf="@id/imgProfile"
+                        app:layout_constraintTop_toTopOf="@id/imgProfile"
+                        app:layout_constraintEnd_toEndOf="parent">
+
+                        <TextView
+                            android:id="@+id/userName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/text_primary"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            tools:text="Username" />
+
+                        <com.google.android.material.chip.ChipGroup
+                            android:id="@+id/chipGroupLabels"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            app:chipSpacingHorizontal="8dp"
+                            app:chipSpacingVertical="4dp"
+                            app:singleLine="true" />
+
+                        <TextView
+                            android:id="@+id/introduction"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="14sp"
+                            tools:text="About me / short introduction..." />
+                    </LinearLayout>
+
+                    <!-- Stats -->
+                    <LinearLayout
+                        android:id="@+id/statsContainer"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        app:layout_constraintTop_toBottomOf="@id/imgProfile"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent">
+
+                        <LinearLayout
+                            android:id="@+id/statFollowers"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/statFollowersValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/text_primary"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                tools:text="0" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Followers"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/statPosts"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/statPostsValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/text_primary"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                tools:text="0" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Posts"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/statFollowing"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/statFollowingValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/text_primary"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                tools:text="0" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Following"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnEditProfile"
+                style="@style/BlueButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
                 android:layout_marginHorizontal="16dp"
-                android:layout_marginTop="8dp"
-                android:background="#1A000000"
-                app:layout_constraintTop_toBottomOf="@id/btnEditProfile"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                android:layout_marginBottom="8dp"
+                android:text="Edit Profile"
+                android:textAllCaps="false"
+                android:textSize="15sp" />
 
-            <!-- 九宮格貼文清單 -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerView"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginHorizontal="12dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="85dp"
+                android:layout_marginTop="6dp"
                 android:nestedScrollingEnabled="false"
+                android:paddingBottom="12dp"
                 app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
                 app:spanCount="3"
-                app:layout_constraintTop_toBottomOf="@id/divider"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
                 tools:listitem="@layout/card_post" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+        </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- 底部導覽列 -->
+    <!-- Bottom navigation -->
     <include
         android:id="@+id/bottomBar"
         layout="@layout/bottom_navigation"
@@ -218,18 +216,18 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom" />
 
-    <!-- 浮動新增按鈕（永遠顯示在導覽列上方） -->
+    <!-- Upload FAB -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabUpload"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/ic_add"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="85dp"
         android:contentDescription="@string/app_name"
-        app:backgroundTint="?attr/colorPrimary"
-        app:tint="@android:color/white"
+        android:src="@drawable/ic_add"
+        app:backgroundTint="#B8DAE3"
         app:layout_anchor="@id/bottomBar"
         app:layout_anchorGravity="top|end"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="85dp"/>
+        app:tint="@android:color/white" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

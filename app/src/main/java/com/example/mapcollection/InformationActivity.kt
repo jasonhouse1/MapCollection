@@ -27,14 +27,14 @@ class InformationActivity : AppCompatActivity() {
 
         tvLocName = findViewById(R.id.tvLocName)
         btnBack = findViewById(R.id.btnBack)
-        btnAskAI = findViewById(R.id.button)   // 「詢問AI」按鈕
-        btnNearbySpots = findViewById(R.id.button2) // 「介紹附近景點」
+        btnAskAI = findViewById(R.id.button)   // 詢問 AI
+        btnNearbySpots = findViewById(R.id.button2) // 介紹附近景點
 
         // 讀取參數（名稱可用於顯示，AI 還是用座標）
         latitude = intent.getDoubleExtra("latitude", 0.0)
         longitude = intent.getDoubleExtra("longitude", 0.0)
         spotName = intent.getStringExtra("spotName")
-            ?: intent.getStringExtra("EXTRA_SPOT_NAME") // 兼容你可能的其他 key
+            ?: intent.getStringExtra("EXTRA_SPOT_NAME") // 兼容其他 key
 
         val hasName = !spotName.isNullOrBlank() && spotName != "null"
         tvLocName.text = if (hasName) spotName else "座標: $latitude, $longitude"
@@ -48,14 +48,13 @@ class InformationActivity : AppCompatActivity() {
     private fun showAskAIDialog() {
         val editText = EditText(this)
         AlertDialog.Builder(this)
-            .setTitle("詢問AI")
-            .setMessage("請輸入您想詢問關於這個地點的問題：")
+            .setTitle("詢問 AI")
+            .setMessage("請輸入你想詢問此景點的問題：")
             .setView(editText)
             .setPositiveButton("送出") { dialog, _ ->
                 val question = editText.text.toString()
                 if (question.isNotBlank()) {
-                    // 即使顯示是名字，AI 還是用座標來回答
-                    val prompt = "關於地點座標 ($latitude, $longitude)，我想知道：$question"
+                    val prompt = "景點座標 ($latitude, $longitude)，問題：$question，請用繁體中文簡明回答。"
                     callGemini(prompt, "AI 的回答")
                 }
                 dialog.dismiss()
@@ -66,8 +65,8 @@ class InformationActivity : AppCompatActivity() {
 
     private fun findNearbyAttractions() {
         val prompt =
-            "請用繁體中文推薦在座標 ($latitude, $longitude) 附近的5個景點，並為每個景點提供一句話的簡短介紹。"
-        callGemini(prompt, "附近景點推薦")
+            "請列出座標 ($latitude, $longitude) 方圓 3 公里內推薦的 5 個景點，每個景點給一行名稱與一句亮點。"
+        callGemini(prompt, "附近景點建議")
     }
 
     private fun callGemini(prompt: String, title: String) {
@@ -97,7 +96,7 @@ class InformationActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle(title)
             .setMessage(message)
-            .setPositiveButton("關閉", null)
+            .setPositiveButton("確認", null)
             .show()
     }
 }

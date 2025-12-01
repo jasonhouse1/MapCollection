@@ -72,9 +72,9 @@ class MainActivity : AppCompatActivity() {
         val email = currentEmail ?: return
         val prefs = getSharedPreferences("Profile_$email", MODE_PRIVATE)
 
-        val userName = prefs.getString("userName", "使用者姓名") ?: "使用者姓名"
-        val userLabel = prefs.getString("userLabel", "個人化標籤") ?: "個人化標籤"
-        val introduction = prefs.getString("introduction", "個人簡介") ?: "個人簡介"
+        val userName = prefs.getString("userName", getString(R.string.default_user_name)) ?: getString(R.string.default_user_name)
+        val userLabel = prefs.getString("userLabel", getString(R.string.default_user_label)) ?: getString(R.string.default_user_label)
+        val introduction = prefs.getString("introduction", getString(R.string.default_intro)) ?: getString(R.string.default_intro)
         val photoBase64 = prefs.getString("userPhotoBase64", null)
         val photoUrl = prefs.getString("photoUrl", null)
 
@@ -97,9 +97,9 @@ class MainActivity : AppCompatActivity() {
         db.collection("users").document(email).get()
             .addOnSuccessListener { doc ->
                 if (doc.exists()) {
-                    val userName = doc.getString("userName") ?: "使用者姓名"
-                    val userLabel = doc.getString("userLabel") ?: "個人化標籤"
-                    val introduction = doc.getString("introduction") ?: "個人簡介"
+                    val userName = doc.getString("userName") ?: getString(R.string.default_user_name)
+                    val userLabel = doc.getString("userLabel") ?: getString(R.string.default_user_label)
+                    val introduction = doc.getString("introduction") ?: getString(R.string.default_intro)
                     val photoUrl = doc.getString("photoUrl")
 
                     updateUserProfileDisplay(userName, userLabel, introduction)

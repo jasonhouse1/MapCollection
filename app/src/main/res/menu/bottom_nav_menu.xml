@@ -2,6 +2,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/nav_home" android:icon="@drawable/home2" android:title="首頁" />
     <item android:id="@+id/nav_search" android:icon="@drawable/search" android:title="搜尋" />
-    <item android:id="@+id/nav_path" android:icon="@drawable/path2" android:title="地圖" />
+    <item android:id="@+id/nav_path" android:icon="@drawable/path2" android:title="路徑" />
     <item android:id="@+id/nav_profile" android:icon="@drawable/profile2" android:title="個人" />
 </menu>

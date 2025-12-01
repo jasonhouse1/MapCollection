@@ -105,16 +105,13 @@
     <!-- 儲存按鈕 -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSave"
+        style="@style/BlueButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="儲存"
+        android:text="保存"
         android:layout_marginHorizontal="80dp"
         android:layout_marginTop="32dp"
         android:layout_marginBottom="48dp"
-        app:cornerRadius="12dp"
-        style="@style/Widget.Material3.Button"
-        app:backgroundTint="#B8DAE3"
-        android:textColor="@android:color/white"
         app:layout_constraintTop_toBottomOf="@id/edIntroduction"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

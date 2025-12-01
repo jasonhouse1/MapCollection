@@ -4,12 +4,12 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
-import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mapcollection.model.SearchItem
 import com.example.mapcollection.ui.search.SearchAdapter
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.Query
@@ -31,7 +31,6 @@ class SearchActivity : AppCompatActivity() {
         etQuery = findViewById(R.id.etQuery)
         rvResults = findViewById(R.id.rvResults)
 
-        // 點擊結果 → 開唯讀瀏覽頁
         adapter = SearchAdapter { item ->
             startActivity(
                 Intent(this, PublicMapViewerActivity::class.java)
@@ -43,19 +42,8 @@ class SearchActivity : AppCompatActivity() {
         rvResults.layoutManager = LinearLayoutManager(this)
         rvResults.adapter = adapter
 
-        // 底部導航
-        findViewById<ImageButton>(R.id.btnRecommend)?.setOnClickListener {
-            startActivity(Intent(this, RecommendActivity::class.java))
-        }
-        findViewById<ImageButton>(R.id.btnSearch)?.setOnClickListener { /* already here */ }
-        findViewById<ImageButton>(R.id.btnPath)?.setOnClickListener {
-            startActivity(Intent(this, PathActivity::class.java))
-        }
-        findViewById<ImageButton>(R.id.btnProfile)?.setOnClickListener {
-            startActivity(Intent(this, MainActivity::class.java))
-        }
+        setupBottomNav()
 
-        // 鍵盤搜尋鍵
         etQuery.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH ||
                 actionId == EditorInfo.IME_ACTION_GO ||
@@ -67,17 +55,30 @@ class SearchActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * 規則說明（延續你原本邏輯）：
-     * - 若查詢字串 q 含「地圖」：
-     *    1) 完整命中 q（名稱>分類）優先
-     *    2) 其次：僅命中「地圖」者
-     *    3) 其他全部排除
-     * - 若 q 不含「地圖」：
-     *    1) 必須完整命中 q（名稱或分類）才收
-     *    2) 名稱命中優於分類命中
-     *    3) 同分：命中位置越前越優，最後以 createdAt 新→舊
-     */
+    private fun setupBottomNav() {
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomBar)
+        bottomNav.selectedItemId = R.id.nav_search
+        bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    startActivity(Intent(this, RecommendActivity::class.java))
+                    true
+                }
+                R.id.nav_search -> true
+                R.id.nav_path -> {
+                    startActivity(Intent(this, PathActivity::class.java))
+                    true
+                }
+                R.id.nav_profile -> {
+                    startActivity(Intent(this, MainActivity::class.java))
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
+    
     private fun performSearch(rawQuery: String) {
         val q = rawQuery.trim()
         if (q.isEmpty()) {
@@ -125,16 +126,13 @@ class SearchActivity : AppCompatActivity() {
                     val containsMapInItem = nameL.contains("地圖") || typeL.contains("地圖")
                     val mapOnlyMatch = qContainsMapWord && !hasFull && containsMapInItem
 
-                    // 篩選：符合兩種情況其中之一
                     if (!hasFull && !(qContainsMapWord && mapOnlyMatch)) {
                         return@mapNotNull null
                     }
 
-                    // 打分
                     var score = 0
                     var posBoost = 0
 
-                    // 完整命中優先 (名稱 > 分類)
                     if (fullHitName) {
                         score += 200
                         posBoost += 100 - nameL.indexOf(qL).coerceAtMost(100)
@@ -144,7 +142,6 @@ class SearchActivity : AppCompatActivity() {
                         posBoost += 60 - typeL.indexOf(qL).coerceAtMost(60)
                     }
 
-                    // q 含「地圖」時，僅命中「地圖」屬於次優
                     if (mapOnlyMatch) {
                         val hitInName = nameL.contains("地圖")
                         val idx = if (hitInName) nameL.indexOf("地圖") else typeL.indexOf("地圖")

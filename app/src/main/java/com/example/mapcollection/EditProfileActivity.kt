@@ -1,20 +1,25 @@
 package com.example.mapcollection
 
-import android.app.Activity
-import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.example.mapcollection.databinding.ActivityEditprofileBinding
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.firestore
+import com.google.firebase.storage.storage
 
 class EditProfileActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityEditprofileBinding
     private var imageUri: Uri? = null
+    private var currentEmail: String? = null
 
-    // 建立圖片選擇器
+    private val db = Firebase.firestore
+    private val storage = Firebase.storage
+
     private val pickImageLauncher =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let {
@@ -28,31 +33,77 @@ class EditProfileActivity : AppCompatActivity() {
         binding = ActivityEditprofileBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // 點擊頭像 → 開啟圖片選擇
-        binding.imgUserPhoto.setOnClickListener {
-            pickImageLauncher.launch("image/*")
-        }
+        currentEmail = getSharedPreferences("Account", MODE_PRIVATE)
+            .getString("LOGGED_IN_EMAIL", null)
 
-        // 點擊儲存按鈕
+        // Prefill with current values passed from MainActivity
+        binding.edUserName.setText(intent.getStringExtra("currentUserName").orEmpty())
+        binding.edUserLabel.setText(intent.getStringExtra("currentUserLabel").orEmpty())
+        binding.edIntroduction.setText(intent.getStringExtra("currentIntroduction").orEmpty())
+
+        binding.imgUserPhoto.setOnClickListener { pickImageLauncher.launch("image/*") }
+
         binding.btnSave.setOnClickListener {
             val name = binding.edUserName.text.toString().trim()
             val label = binding.edUserLabel.text.toString().trim()
             val intro = binding.edIntroduction.text.toString().trim()
+            val email = currentEmail
 
-            if (name.isEmpty()) {
-                Toast.makeText(this, "請輸入使用者名稱", Toast.LENGTH_SHORT).show()
+            if (name.isEmpty() || email.isNullOrEmpty()) {
+                Toast.makeText(this, getString(R.string.error_missing_name_or_email), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // 假設未連接 Firebase，這裡先顯示結果
-            val message = buildString {
-                append("名稱: $name\n")
-                append("標籤: $label\n")
-                append("簡介: $intro\n")
-                append(if (imageUri != null) "頭像已選擇" else "尚未選擇頭像")
-            }
+            saveProfile(email, name, label, intro)
+        }
+    }
 
-            Toast.makeText(this, "已儲存變更\n$message", Toast.LENGTH_LONG).show()
+    private fun saveProfile(email: String, name: String, label: String, intro: String) {
+        val userData = hashMapOf(
+            "userName" to name,
+            "userLabel" to label,
+            "introduction" to intro
+        )
+
+        fun persist(photoUrl: String?) {
+            photoUrl?.let { userData["photoUrl"] = it }
+
+            db.collection("users").document(email)
+                .set(userData, SetOptions.merge())
+                .addOnSuccessListener {
+                    val prefs = getSharedPreferences("Profile_$email", MODE_PRIVATE).edit()
+                    prefs.putString("userName", name)
+                    prefs.putString("userLabel", label)
+                    prefs.putString("introduction", intro)
+                    if (photoUrl != null) {
+                        prefs.putString("photoUrl", photoUrl)
+                        prefs.remove("userPhotoBase64")
+                    }
+                    prefs.apply()
+
+                    Toast.makeText(this, getString(R.string.profile_saved), Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+                .addOnFailureListener {
+                    Toast.makeText(this, getString(R.string.profile_save_failed), Toast.LENGTH_SHORT).show()
+                }
+        }
+
+        val uri = imageUri
+        if (uri != null) {
+            val ref = storage.reference.child("user_photos/$email.jpg")
+            ref.putFile(uri)
+                .continueWithTask { task ->
+                    if (!task.isSuccessful) task.exception?.let { throw it }
+                    ref.downloadUrl
+                }
+                .addOnSuccessListener { url -> persist(url.toString()) }
+                .addOnFailureListener {
+                    Toast.makeText(this, getString(R.string.photo_upload_failed), Toast.LENGTH_SHORT).show()
+                    persist(null)
+                }
+        } else {
+            persist(null)
         }
     }
 }

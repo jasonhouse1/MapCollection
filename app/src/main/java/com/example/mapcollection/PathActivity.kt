@@ -6,7 +6,6 @@ import android.text.InputType
 import android.view.Gravity
 import android.view.MenuItem
 import android.widget.EditText
-import android.widget.ImageButton
 import android.widget.PopupMenu
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
@@ -15,6 +14,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.Firebase
@@ -78,15 +78,25 @@ class PathActivity : AppCompatActivity() {
     }
 
     private fun setupBottomNav() {
-        findViewById<ImageButton>(R.id.btnRecommend).setOnClickListener {
-            startActivity(Intent(this, RecommendActivity::class.java))
-        }
-        findViewById<ImageButton>(R.id.btnSearch).setOnClickListener {
-            startActivity(Intent(this, SearchActivity::class.java))
-        }
-        findViewById<ImageButton>(R.id.btnPath).setOnClickListener { /* stay */ }
-        findViewById<ImageButton>(R.id.btnProfile).setOnClickListener {
-            startActivity(Intent(this, MainActivity::class.java))
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomBar)
+        bottomNav.selectedItemId = R.id.nav_path
+        bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    startActivity(Intent(this, RecommendActivity::class.java))
+                    true
+                }
+                R.id.nav_search -> {
+                    startActivity(Intent(this, SearchActivity::class.java))
+                    true
+                }
+                R.id.nav_path -> true
+                R.id.nav_profile -> {
+                    startActivity(Intent(this, MainActivity::class.java))
+                    true
+                }
+                else -> false
+            }
         }
     }
 
